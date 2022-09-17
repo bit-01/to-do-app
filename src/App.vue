@@ -22,7 +22,7 @@
 </template>
 
 <script>
-import { query, collection, addDoc, updateDoc, doc, where, deleteDoc, onSnapshot  } from "firebase/firestore"
+import { query, collection, addDoc, updateDoc, doc, where, deleteDoc, onSnapshot, orderBy  } from "firebase/firestore"
 import {db} from './db'
 
 export default {
@@ -48,7 +48,7 @@ export default {
       if (this.filter !== 'all') {
         op = '=='
       } 
-      onSnapshot(query(collection(db, 'items'), where('state', op, this.filter)), 
+      onSnapshot(query(collection(db, 'items'), where('state', op, this.filter), orderBy('position')), 
       (snap) => {
         this.items = [];
         snap.forEach((doc) => {
@@ -63,7 +63,8 @@ export default {
       if (this.new_item !== '' && this.new_item.length > 0) {
         await addDoc(collection(db, 'items'), {
           name: this.new_item, 
-          state: 'active'
+          state: 'active',
+          position: this.items.length
         }).then(() => {
 
         }).catch((error) => {
