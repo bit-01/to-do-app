@@ -47,6 +47,7 @@ Users should be able to:
 - Semantic HTML5 markup
 - CSS custom properties
 - Flexbox
+- Bootstrap
 - [Vue 3](https://vuejs.org/) - JS Framework
 - [Firebase](https://firebase.google.com)
 - Mobile-first workflow
