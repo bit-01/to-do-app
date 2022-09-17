@@ -2,7 +2,7 @@
   <div class="container col-lg-6 pt-5 p-3">
     <nav class="navbar bg-light">
       <div class="container-fluid">
-        <a class="navbar-brand">Todo</a>
+        <h1 class="navbar-brand">Todo</h1>
 
         <button class="d-flex btn btn-outline-success" type="button">
           Search
