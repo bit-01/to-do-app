@@ -10,7 +10,12 @@ export default {
   name: 'App',
   components: {
     HelloWorld
-  }
+  },
+  data() {
+    return { 
+      publicPath: process.env.BASE_URL
+     };
+  },
 }
 </script>
 
