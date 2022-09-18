@@ -110,7 +110,7 @@
                 i.state == 'completed' ? 'completed' : '',
               ]"
             >
-              {{ i.name + " - " + i.position }}
+              {{ i.name }}
             </label>
           </div>
           <div class="col-1 p-0 m-0">
@@ -205,15 +205,16 @@ export default {
     return {
       publicPath: process.env.BASE_URL,
       items: [],
-      new_item: { name: "", state: false },
+      new_item: { name: null, state: false },
       filter: "all",
       themeDark: true,
-      loading: true
+      loading: true,
+      editing: false
     };
   },
   created() {
     this.changeTheme();
-    this.getAllItems();
+    this.getAllItems()
   },
   watch: {
     themeDark() {
@@ -235,7 +236,8 @@ export default {
             this.items.push(doc.data());
             this.items[this.items.length - 1].id = doc.id;
           });
-          this.loading = false
+          
+          this.loading = this.editing == true ? true : false
         }
       );
     },
@@ -261,19 +263,24 @@ export default {
     async addItem() {
       if (this.new_item.name !== "" && this.new_item.name.length > 0) {
         this.loading = true
+        this.editing = true
         await addDoc(collection(db, "items"), {
           name: this.new_item.name,
           state: this.new_item.state == false ? "active" : "completed",
           position: this.items.length,
         })
           .then(() => {
-            this.new_item.name = "";
+            this.new_item.name = null
+            this.new_item.state = false
             this.loading = false
+            this.editing = false
           })
           .catch((error) => {
             console.log("could not add item: " + error);
             this.loading = false
           });
+
+
       }
     },
     async changeState(id) {
