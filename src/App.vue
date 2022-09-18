@@ -76,8 +76,8 @@
         </div>
       </div>
 
-      <div class="row mt-3 itemsList">
-        <div v-for="(i, k) of items" :key="k" class="row">
+      <div class="row mt-3 itemsList" >
+        <div v-for="(i, k) of items" :key="k" class="row" draggable="true">
           <div class="col-1">
             <!-- <label :for="i.id" class="state-label"> -->
             <input
@@ -98,7 +98,7 @@
                 i.state == 'completed' ? 'completed' : '',
               ]"
             >
-              {{ i.name }}
+              {{ i.name + ' - ' + i.position }}
             </label>
           </div>
           <div class="col-1 p-0 m-0">
@@ -227,7 +227,7 @@ export default {
           state: this.new_item.state == false ? "active" : "completed",
           position: this.items.length,
         })
-          .then(() => {})
+          .then(() => {this.new_item.name = ''})
           .catch((error) => {
             console.log("could not add item: " + error);
           });
@@ -409,6 +409,9 @@ label.btn {
 label.completed {
   color: #dadadc;
   text-decoration: line-through;
+}
+label.btn:focus, label.btn:active {
+  border: none;
 }
 .footer,
 .footer .btn {
