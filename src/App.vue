@@ -56,7 +56,7 @@
             minlength="4"
           />
         </div>
-        <div class="col-1">
+        <div class="col-1 p-0 m-0">
           <button class="btn p-0 m-0" type="button" @click="addItem()">
             <svg
               version="1.2"
@@ -75,28 +75,92 @@
           </button>
         </div>
       </div>
+
+      <div class="row mt-3 itemsList">
+        <div v-for="(i, k) of items" :key="k" class="row">
+          <div class="col-1">
+            <!-- <label :for="i.id" class="state-label"> -->
+            <input
+              :id="i.id"
+              type="checkbox"
+              :checked="i.state == 'completed' ? true : false"
+              @change="changeState(k)"
+            />
+            <!-- </label> -->
+          </div>
+          <div class="col-10">
+            <label
+              :for="i.id"
+              :class="[
+                'btn',
+                'p-0',
+                'm-0',
+                i.state == 'completed' ? 'completed' : '',
+              ]"
+            >
+              {{ i.name }}
+            </label>
+          </div>
+          <div class="col-1 p-0 m-0">
+            <button class="btn p-0 m-0" type="button" @click="deleteItem(i.id)">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18">
+                <path
+                  fill="#494C6B"
+                  fill-rule="evenodd"
+                  d="M16.97 0l.708.707L9.546 8.84l8.132 8.132-.707.707-8.132-8.132-8.132 8.132L0 16.97l8.132-8.132L0 .707.707 0 8.84 8.132 16.971 0z"
+                />
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="row position-relative footer">
+          <div class="col-lg-3 col-6 order-1 text-start">
+            <p style="margin: auto">
+              {{ items.filter((item) => item.state == "active").length }} items
+              left
+            </p>
+          </div>
+          <div class="filterOpts first_row col-lg-6 col-12 order-lg-2 order-3">
+            <div class="filterOpt">
+              <input
+                name="filter"
+                v-model="filter"
+                type="radio"
+                value="all"
+                id="filterAll"
+              />
+              <label for="filterAll"> All </label>
+            </div>
+            <div class="filterOpt">
+              <input
+                name="filter"
+                v-model="filter"
+                type="radio"
+                value="active"
+                id="filterActive"
+              />
+              <label for="filterActive"> Active </label>
+            </div>
+            <div class="filterOpt">
+              <input
+                name="filter"
+                v-model="filter"
+                type="radio"
+                value="completed"
+                id="filterCompleted"
+              />
+              <label for="filterCompleted"> Completed </label>
+            </div>
+          </div>
+          <div class="col-lg-3 col-6 order-lg-3 order-2 text-end">
+            <button class="btn btn-clear p-0 m-0" type="button" @click="clearCompleted()">
+              Clear Completed
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
-    <ul class="d-block m-3">
-      <li v-for="(i, k) of items" :key="k" class="m-3">
-        {{ i.name }} - {{ i.state }} - {{ i.id }} - {{ i.position }}
-        <button
-          v-if="i.state == 'active'"
-          class="btn btn-secondary"
-          @click="changeState(i.id)"
-        >
-          complete
-        </button>
-        <button class="btn btn-danger" @click="deleteItem(i.id)">delete</button>
-      </li>
-    </ul>
-    <select v-model="filter" @change="getAllItems()">
-      <option value="all" default>All</option>
-      <option value="completed">Completed</option>
-      <option value="active">Active</option>
-    </select>
-    <button class="btn btn-danger" @click="clearCompleted()">
-      Clear Completed
-    </button>
   </div>
 </template>
 
@@ -133,8 +197,8 @@ export default {
     themeDark() {
       this.changeTheme();
     },
-    "new_item.state"(ol, nw) {
-      console.log(ol, nw);
+    filter() {
+      this.getAllItems();
     },
   },
   methods: {
@@ -170,7 +234,9 @@ export default {
       }
     },
     async changeState(id) {
-      await updateDoc(doc(db, "items", id), { state: "completed" })
+      await updateDoc(doc(db, "items", this.items[id].id), {
+        state: this.items[id].state == "completed" ? "active" : "completed",
+      })
         .then(() => {})
         .catch((error) => {
           console.log("could not updated item: " + error);
@@ -205,18 +271,17 @@ export default {
 <style>
 @import url("https://fonts.googleapis.com/css2?family=Josefin+Sans:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;1,100;1,200;1,300;1,400;1,500;1,600;1,700&display=swap");
 
-body {
+html body {
   font-family: "Josefin Sans", sans-serif !important;
-  background-repeat: no-repeat;
-  background-size: 100%;
-  background-image: url("/public/bg-mobile-light.jpg");
-  background-color: #f8f8f8;
-  color: #656473;
+  background: url("/public/bg-mobile-light.jpg"), #f8f8f8;
+  background-repeat: no-repeat !important;
+  background-size: 100% !important;
+  
+  color: hsl(235, 19%, 35%);
 }
 body.dark {
-  background-image: url("/public/bg-mobile-dark.jpg");
-  background-color: #171723;
-  color: #a9abc2;
+  background: url("/public/bg-mobile-dark.jpg"), #171723;
+  color: hsl(234, 39%, 85%);
 }
 
 nav h1.navbar-brand,
@@ -238,7 +303,6 @@ div.items-table {
   padding: 1em;
   align-items: center;
   justify-content: center;
-  border-radius: 5px;
 }
 input {
   color: inherit !important;
@@ -250,6 +314,7 @@ input {
 .first_row,
 .itemsList {
   background-color: #fff;
+  border-radius: 5px;
 }
 input[type="checkbox"] {
   -webkit-appearance: none;
@@ -314,6 +379,70 @@ input[type="text"].form-control:focus {
 .container.mainContainer {
   padding-top: 2.5em !important;
   padding: 1.5em;
+}
+.itemsList .row {
+  padding: 1em !important;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  text-align: start;
+}
+.itemsList .row:not(:last-child) {
+  border-bottom: 1px solid #e6e5ea;
+}
+.row .col-10 {
+  padding-left: 1em;
+  padding-right: 1em;
+}
+.dark .itemsList .row:not(:last-child) {
+  border-bottom-color: #383a4f;
+}
+label.btn {
+  color: inherit;
+  width: 100%;
+  text-align: start;
+}
+
+.dark label.completed {
+  color: #494b62;
+}
+label.completed {
+  color: #dadadc;
+  text-decoration: line-through;
+}
+.footer,
+.footer .btn {
+  font-size: 14px;
+  color: hsl(236, 9%, 61%);
+}
+.dark .footer,
+.dark .footer .btn {
+  color: #494b62;
+}
+.filterOpts {
+  position: absolute;
+  display: flex;
+  justify-content: space-evenly;
+  bottom: -4.5em;
+}
+.filterOpt input[type="radio"] {
+  appearance: none;
+  -moz-appearance: none;
+  -o-appearance: none;
+  -webkit-appearance: none;
+}
+.filterOpt input[type="radio"] + label{
+  cursor: pointer;
+  font-weight: 700;
+}
+.filterOpt input[type="radio"]:checked + label{
+  color: hsl(220, 98%, 61%);
+}
+.btn-clear:hover, .btn-clear:focus, .filterOpt input[type="radio"]:hover + label, .filterOpt input[type="radio"]:focus + label {
+  color: hsl(235, 19%, 35%) !important;
+}
+.dark .btn-clear:hover, .btn-clear:focus, .dark .filterOpt input[type="radio"]:hover + label, .dark .filterOpt input[type="radio"]:focus + label {
+  color: hsl(234, 39%, 85%) !important;
 }
 @media (min-width: 992px) {
   body {
