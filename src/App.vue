@@ -1,7 +1,7 @@
 <template>
   <div class="container col-lg-6 mainContainer">
     <nav class="navbar">
-      <div class="container-fluid">
+      <div class="container-fluid p-0">
         <h1 class="navbar-brand">Todo</h1>
 
         <label class="d-flex btn-theme" id="themeBtn" type="button">
@@ -33,13 +33,48 @@
         </label>
       </div>
     </nav>
-    <div class="form-group m-3">
-      <input
-        v-model="new_item"
-        class="form-control mb-1"
-        type="text"
-        placeholder="Item Name"
-      />
+    <div class="container-fluid items-table text-center">
+      <div class="row first_row">
+        <div class="col-1">
+          <label for="#new_item_state" class="state-label">
+            <input
+              v-model="new_item.state"
+              id="new_item_state"
+              type="checkbox"
+              name="state"
+            />
+            <!-- <span class="checkBox"></span> -->
+          </label>
+        </div>
+        <div class="col-10">
+          <input
+            v-model="new_item.name"
+            class="form-control"
+            type="text"
+            placeholder="Item Name"
+            required
+            minlength="4"
+          />
+        </div>
+        <div class="col-1">
+          <button class="btn p-0 m-0" type="button" @click="addItem()">
+            <svg
+              version="1.2"
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 18 18"
+              width="18"
+              height="18"
+            >
+              <path
+                id="Layer"
+                style="fill: #494c6b"
+                class="s0"
+                d="m8.6 0h0.8v8.6h8.6v0.8h-8.6v8.6h-0.8v-8.6h-8.6v-0.8h8.6c0 0 0-8.6 0-8.6zm0 0h0.8v8.6h8.6v0.8h-8.6v8.6h-0.8v-8.6h-8.6v-0.8h8.6c0 0 0-8.6 0-8.6z"
+              />
+            </svg>
+          </button>
+        </div>
+      </div>
     </div>
     <ul class="d-block m-3">
       <li v-for="(i, k) of items" :key="k" class="m-3">
@@ -85,7 +120,7 @@ export default {
     return {
       publicPath: process.env.BASE_URL,
       items: [],
-      new_item: "",
+      new_item: { name: "", state: false },
       filter: "all",
       themeDark: true,
     };
@@ -97,6 +132,9 @@ export default {
   watch: {
     themeDark() {
       this.changeTheme();
+    },
+    "new_item.state"(ol, nw) {
+      console.log(ol, nw);
     },
   },
   methods: {
@@ -119,10 +157,10 @@ export default {
       );
     },
     async addItem() {
-      if (this.new_item !== "" && this.new_item.length > 0) {
+      if (this.new_item.name !== "" && this.new_item.name.length > 0) {
         await addDoc(collection(db, "items"), {
-          name: this.new_item,
-          state: "active",
+          name: this.new_item.name,
+          state: this.new_item.state == false ? "active" : "completed",
           position: this.items.length,
         })
           .then(() => {})
@@ -173,13 +211,16 @@ body {
   background-size: 100%;
   background-image: url("/public/bg-mobile-light.jpg");
   background-color: #f8f8f8;
+  color: #656473;
 }
 body.dark {
   background-image: url("/public/bg-mobile-dark.jpg");
   background-color: #171723;
+  color: #a9abc2;
 }
 
-nav h1.navbar-brand, nav h1.navbar-brand:hover {
+nav h1.navbar-brand,
+nav h1.navbar-brand:hover {
   font-size: calc(1em + 1.5vw);
   color: #fff;
   text-transform: uppercase;
@@ -189,6 +230,91 @@ nav h1.navbar-brand, nav h1.navbar-brand:hover {
   margin: 0;
 }
 
+div.items-table {
+  margin-top: 1.5em;
+}
+
+.first_row {
+  padding: 1em;
+  align-items: center;
+  justify-content: center;
+  border-radius: 5px;
+}
+input {
+  color: inherit !important;
+}
+.dark .first_row,
+.dark .itemsList {
+  background-color: #25273c;
+}
+.first_row,
+.itemsList {
+  background-color: #fff;
+}
+input[type="checkbox"] {
+  -webkit-appearance: none;
+  appearance: none;
+  display: grid;
+  place-content: center;
+}
+input[type="checkbox"]::before {
+  width: 25px;
+  height: 25px;
+  display: inline-block;
+  border: #f0f0f1 2px solid;
+  border-radius: 50%;
+  content: "";
+}
+.dark input[type="checkbox"]::before {
+  border-color: #2f3146;
+}
+input[type="checkbox"]:checked::before,
+input[type="checkbox"]:checked:hover::before,
+input[type="checkbox"]:checked:focus::before,
+input[type="checkbox"]:checked:focus-visible::before {
+  background: url("/public/icon-check.svg"),
+    linear-gradient(-45deg, #80c9fc, #a47cdf);
+  background-repeat: no-repeat;
+  background-position: center center;
+  -webkit-mask: none;
+  -webkit-mask-composite: none; /*5'*/
+  mask-composite: none;
+  border: none;
+}
+input[type="checkbox"]:hover::before,
+input[type="checkbox"]:focus-visible::before,
+input[type="checkbox"]:focus::before {
+  cursor: pointer;
+  border: 2px solid transparent; /*2*/
+  background: linear-gradient(-45deg, #80c9fc, #a47cdf) border-box; /*3*/
+  -webkit-mask: /*4*/ linear-gradient(#fff 0 0) padding-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor; /*5'*/
+  mask-composite: exclude;
+}
+input[type="checkbox"]:focus-visible {
+  border: none;
+  outline: 0;
+}
+label.state-label {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+input[type="text"].form-control {
+  background: none;
+  border: none;
+  padding: 0;
+}
+input[type="text"].form-control:hover,
+input[type="text"].form-control:focus {
+  border: none;
+  box-shadow: none;
+}
+.container.mainContainer {
+  padding-top: 2.5em !important;
+  padding: 1.5em;
+}
 @media (min-width: 992px) {
   body {
     background-image: url("/public/bg-desktop-light.jpg");
@@ -198,8 +324,8 @@ nav h1.navbar-brand, nav h1.navbar-brand:hover {
   }
 
   .container.mainContainer {
-    padding: 4.5em;
-    padding-top: 4em;
+    padding: 5em;
+    padding-top: 4em !important;
   }
 }
 </style>
