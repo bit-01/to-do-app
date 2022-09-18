@@ -554,7 +554,7 @@ label.btn:active {
   margin-top: 2em;
 }
 @media (min-width: 992px) {
-  body {
+  html body {
     background-image: url("/public/bg-desktop-light.jpg");
   }
   body.dark {
