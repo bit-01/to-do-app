@@ -76,8 +76,17 @@
         </div>
       </div>
 
-      <div class="row mt-3 itemsList" >
-        <div v-for="(i, k) of items" :key="k" class="row" draggable="true">
+      <div class="row mt-3 itemsList">
+        <div
+          v-for="(i, k) of items"
+          :key="k"
+          class="row"
+          draggable="true"
+          @dragstart="startDrag($event, k)"
+          @drop="onDrop($event, k)"
+          @dragover.prevent
+          @dragenter.prevent
+        >
           <div class="col-1">
             <!-- <label :for="i.id" class="state-label"> -->
             <input
@@ -98,7 +107,7 @@
                 i.state == 'completed' ? 'completed' : '',
               ]"
             >
-              {{ i.name + ' - ' + i.position }}
+              {{ i.name + " - " + i.position }}
             </label>
           </div>
           <div class="col-1 p-0 m-0">
@@ -154,12 +163,20 @@
             </div>
           </div>
           <div class="col-lg-4 col-6 order-lg-3 order-2 text-end">
-            <button class="btn btn-clear p-0 m-0" type="button" @click="clearCompleted()">
+            <button
+              class="btn btn-clear p-0 m-0"
+              type="button"
+              @click="clearCompleted()"
+            >
               Clear Completed
             </button>
           </div>
         </div>
+
       </div>
+      <p class="footnote">
+          Drag and drop to reorder list
+        </p>
     </div>
   </div>
 </template>
@@ -174,6 +191,8 @@ import {
   where,
   deleteDoc,
   onSnapshot,
+  orderBy,
+  getDocs,
 } from "firebase/firestore";
 import { db } from "./db";
 
@@ -198,27 +217,39 @@ export default {
       this.changeTheme();
     },
     filter() {
-      this.getAllItems();
+      this.getFilteredItems();
     },
   },
   methods: {
     async getAllItems() {
-      let op = "in";
-      let f = ["completed", "active"];
-      if (this.filter != "all") {
-        op = "==";
-        f = this.filter;
-      }
       onSnapshot(
-        query(collection(db, "items"), where("state", op, f)),
+        query(collection(db, "items"), orderBy("position")),
         (snap) => {
           this.items = [];
+          this.filter = 'all'
           snap.forEach((doc) => {
             this.items.push(doc.data());
             this.items[this.items.length - 1].id = doc.id;
           });
         }
       );
+    },
+    async getFilteredItems() {
+      if (this.filter == "all") {
+        this.getAllItems();
+      } else {
+        let its = await getDocs(query(
+          collection(db, "items"),
+          where("state", "==", this.filter),
+          orderBy("position")
+        ));
+        
+        this.items = [];
+        its.forEach((doc) => {
+          this.items.push(doc.data());
+          this.items[this.items.length - 1].id = doc.id;
+        });
+      }
     },
     async addItem() {
       if (this.new_item.name !== "" && this.new_item.name.length > 0) {
@@ -227,7 +258,9 @@ export default {
           state: this.new_item.state == false ? "active" : "completed",
           position: this.items.length,
         })
-          .then(() => {this.new_item.name = ''})
+          .then(() => {
+            this.new_item.name = "";
+          })
           .catch((error) => {
             console.log("could not add item: " + error);
           });
@@ -236,6 +269,15 @@ export default {
     async changeState(id) {
       await updateDoc(doc(db, "items", this.items[id].id), {
         state: this.items[id].state == "completed" ? "active" : "completed",
+      })
+        .then(() => {})
+        .catch((error) => {
+          console.log("could not updated item: " + error);
+        });
+    },
+    async changeOrder(id, newPosition) {
+      await updateDoc(doc(db, "items", this.items[id].id), {
+        position: newPosition,
       })
         .then(() => {})
         .catch((error) => {
@@ -264,6 +306,33 @@ export default {
         document.body.classList.remove("dark");
       }
     },
+    startDrag(evt, k) {
+      evt.dataTransfer.dropEffect = "move";
+      evt.dataTransfer.effectAllowed = "move";
+      evt.dataTransfer.setData("itemIndex", k);
+    },
+    onDrop(evt, itemRIndex) {
+      const itemIndex = evt.dataTransfer.getData("itemIndex");
+      let temp = this.items[itemIndex].position;
+      this.changeOrder(itemIndex, this.items[itemRIndex].position).catch(
+        (error) => {
+          console.log(
+            "Could not change order of item <" +
+              this.items[itemIndex].name +
+              ">: " +
+              error
+          );
+        }
+      );
+      this.changeOrder(itemRIndex, temp).catch((error) => {
+        console.log(
+          "Could not change order of item <" +
+            this.items[itemRIndex].name +
+            ">: " +
+            error
+        );
+      });
+    },
   },
 };
 </script>
@@ -276,7 +345,7 @@ html body {
   background: url("/public/bg-mobile-light.jpg"), #f8f8f8;
   background-repeat: no-repeat !important;
   background-size: 100% !important;
-  
+
   color: hsl(235, 19%, 35%);
 }
 body.dark {
@@ -410,16 +479,17 @@ label.completed {
   color: #dadadc;
   text-decoration: line-through;
 }
-label.btn:focus, label.btn:active {
+label.btn:focus,
+label.btn:active {
   border: none;
 }
 .footer,
-.footer .btn {
+.footer .btn, .footnote {
   font-size: 14px;
   color: hsl(236, 9%, 61%);
 }
 .dark .footer,
-.dark .footer .btn {
+.dark .footer .btn, .dark .footnote {
   color: #494b62;
 }
 .filterOpts {
@@ -434,18 +504,29 @@ label.btn:focus, label.btn:active {
   -o-appearance: none;
   -webkit-appearance: none;
 }
-.filterOpt input[type="radio"] + label{
+.filterOpt input[type="radio"] + label {
   cursor: pointer;
   font-weight: 700;
 }
-.filterOpt input[type="radio"]:checked + label{
+.filterOpt input[type="radio"]:checked + label {
   color: hsl(220, 98%, 61%);
 }
-.btn-clear:hover, .btn-clear:focus, .filterOpt input[type="radio"]:hover + label, .filterOpt input[type="radio"]:focus + label {
+.btn-clear:hover,
+.btn-clear:focus,
+.filterOpt input[type="radio"]:hover + label,
+.filterOpt input[type="radio"]:focus + label {
   color: hsl(235, 19%, 35%) !important;
 }
-.dark .btn-clear:hover, .btn-clear:focus, .dark .filterOpt input[type="radio"]:hover + label, .dark .filterOpt input[type="radio"]:focus + label {
+.dark .btn-clear:hover,
+.btn-clear:focus,
+.dark .filterOpt input[type="radio"]:hover + label,
+.dark .filterOpt input[type="radio"]:focus + label {
   color: hsl(234, 39%, 85%) !important;
+}
+
+.footnote {
+  font-size: 14px;
+  margin-top: 2em;
 }
 @media (min-width: 992px) {
   body {
@@ -460,7 +541,7 @@ label.btn:focus, label.btn:active {
     padding-top: 4em !important;
   }
   .filterOpts {
-    position: unset; 
-}
+    position: unset;
+  }
 }
 </style>
