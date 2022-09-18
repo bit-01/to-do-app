@@ -1,4 +1,7 @@
 <template>
+<div :class="['loader', loading == false ? 'd-none' : '']">
+  <div class="lds-ripple"><div></div><div></div></div>
+</div>
   <div class="container col-lg-6 mainContainer">
     <nav class="navbar">
       <div class="container-fluid p-0">
@@ -46,7 +49,7 @@
             <!-- <span class="checkBox"></span> -->
           </label>
         </div>
-        <div class="col-10">
+        <div class="col-10 position-relative">
           <input
             v-model="new_item.name"
             class="form-control"
@@ -126,8 +129,7 @@
         <div class="row position-relative footer">
           <div class="col-lg-3 col-6 order-1 text-start">
             <p style="margin: auto">
-              {{ items.filter((item) => item.state == "active").length }} items
-              left
+              {{ filter == 'completed items' ? items.length + ' completed' : items.filter((item) => item.state == "active").length + ' items left'}} 
             </p>
           </div>
           <div class="filterOpts first_row col-lg-5 col-12 order-lg-2 order-3">
@@ -206,6 +208,7 @@ export default {
       new_item: { name: "", state: false },
       filter: "all",
       themeDark: true,
+      loading: true
     };
   },
   created() {
@@ -222,6 +225,7 @@ export default {
   },
   methods: {
     async getAllItems() {
+      this.loading = true
       onSnapshot(
         query(collection(db, "items"), orderBy("position")),
         (snap) => {
@@ -231,6 +235,7 @@ export default {
             this.items.push(doc.data());
             this.items[this.items.length - 1].id = doc.id;
           });
+          this.loading = false
         }
       );
     },
@@ -238,6 +243,7 @@ export default {
       if (this.filter == "all") {
         this.getAllItems();
       } else {
+        this.loading = true
         let its = await getDocs(query(
           collection(db, "items"),
           where("state", "==", this.filter),
@@ -249,10 +255,12 @@ export default {
           this.items.push(doc.data());
           this.items[this.items.length - 1].id = doc.id;
         });
+        this.loading = false
       }
     },
     async addItem() {
       if (this.new_item.name !== "" && this.new_item.name.length > 0) {
+        this.loading = true
         await addDoc(collection(db, "items"), {
           name: this.new_item.name,
           state: this.new_item.state == false ? "active" : "completed",
@@ -260,44 +268,54 @@ export default {
         })
           .then(() => {
             this.new_item.name = "";
+            this.loading = false
           })
           .catch((error) => {
             console.log("could not add item: " + error);
+            this.loading = false
           });
       }
     },
     async changeState(id) {
+      this.loading = true
       await updateDoc(doc(db, "items", this.items[id].id), {
         state: this.items[id].state == "completed" ? "active" : "completed",
       })
-        .then(() => {})
+        .then(() => {this.loading = false})
         .catch((error) => {
           console.log("could not updated item: " + error);
+          this.loading = false
         });
     },
     async changeOrder(id, newPosition) {
+      this.loading = true
       await updateDoc(doc(db, "items", this.items[id].id), {
         position: newPosition,
       })
-        .then(() => {})
+        .then(() => {this.loading = false})
         .catch((error) => {
           console.log("could not updated item: " + error);
+          this.loading = false
         });
     },
     async deleteItem(id) {
+      this.loading = true
       await deleteDoc(doc(db, "items", id))
-        .then(() => {})
+        .then(() => {this.loading = false})
         .catch((error) => {
           console.log("Could not Delete Item: " + error);
+          this.loading = false
         });
     },
     async clearCompleted() {
+      this.loading = true
       let cItems = this.items.filter((i) => i.state == "completed");
       cItems.forEach((i) => {
         deleteDoc(doc(db, "items", i.id)).catch((error) => {
           console.log("could not delete item <" + i.name + ">: " + error);
         });
       });
+      this.loading = false
     },
     changeTheme() {
       if (this.themeDark == 1) {
@@ -544,4 +562,67 @@ label.btn:active {
     position: unset;
   }
 }
+.loader {
+  height: 100vh;
+display: flex;
+justify-content: center;
+align-items: center;
+position: fixed;
+width: 100%;
+background: #f8f8f8c0;
+z-index: 100;
+}
+.dark .loader {
+  background: #171723c0;
+}
+.lds-ripple {
+  display: inline-block;
+  position: relative;
+  width: 80px;
+  height: 80px;
+}
+.lds-ripple div {
+  position: absolute;
+  border: 4px solid #171723;
+  opacity: 1;
+  border-radius: 50%;
+  animation: lds-ripple 1s cubic-bezier(0, 0.2, 0.8, 1) infinite;
+}
+.dark .lds-ripple div {
+  border-color: #f8f8f8;
+}
+.lds-ripple div:nth-child(2) {
+  animation-delay: -0.5s;
+}
+@keyframes lds-ripple {
+  0% {
+    top: 36px;
+    left: 36px;
+    width: 0;
+    height: 0;
+    opacity: 0;
+  }
+  4.9% {
+    top: 36px;
+    left: 36px;
+    width: 0;
+    height: 0;
+    opacity: 0;
+  }
+  5% {
+    top: 36px;
+    left: 36px;
+    width: 0;
+    height: 0;
+    opacity: 1;
+  }
+  100% {
+    top: 0px;
+    left: 0px;
+    width: 72px;
+    height: 72px;
+    opacity: 0;
+  }
+}
+
 </style>
