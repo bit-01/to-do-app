@@ -121,7 +121,7 @@
               left
             </p>
           </div>
-          <div class="filterOpts first_row col-lg-6 col-12 order-lg-2 order-3">
+          <div class="filterOpts first_row col-lg-5 col-12 order-lg-2 order-3">
             <div class="filterOpt">
               <input
                 name="filter"
@@ -153,7 +153,7 @@
               <label for="filterCompleted"> Completed </label>
             </div>
           </div>
-          <div class="col-lg-3 col-6 order-lg-3 order-2 text-end">
+          <div class="col-lg-4 col-6 order-lg-3 order-2 text-end">
             <button class="btn btn-clear p-0 m-0" type="button" @click="clearCompleted()">
               Clear Completed
             </button>
@@ -456,5 +456,8 @@ label.completed {
     padding: 5em;
     padding-top: 4em !important;
   }
+  .filterOpts {
+    position: unset; 
+}
 }
 </style>
