@@ -2,17 +2,17 @@
 <div :class="['loader', loading == false ? 'd-none' : '']">
   <div class="lds-ripple"><div></div><div></div></div>
 </div>
-  <div class="container col-lg-6 mainContainer">
+  <main class="container col-lg-6 mainContainer">
     <nav class="navbar">
       <div class="container-fluid p-0">
         <h1 class="navbar-brand">Todo</h1>
 
-        <label class="d-flex btn-theme" id="themeBtn" type="button">
+        <label class="d-flex btn-theme" id="themeBtn">
           <input
             type="checkbox"
             class="d-none"
             v-model="themeDark"
-            aria-labelledby="#themeBtn"
+            aria-labelledby="themeBtn"
           />
           <svg
             v-if="themeDark == true"
@@ -39,12 +39,13 @@
     <div class="container-fluid items-table text-center">
       <div class="row first_row">
         <div class="col-1">
-          <label for="#new_item_state" class="state-label">
+          <label for="new_item_state" id="new_item_state_label" class="state-label">
             <input
               v-model="new_item.state"
               id="new_item_state"
               type="checkbox"
               name="state"
+              aria-labelledby="new_item_state_label"
             />
             <!-- <span class="checkBox"></span> -->
           </label>
@@ -60,9 +61,8 @@
           />
         </div>
         <div class="col-1 p-0 m-0">
-          <button class="btn p-0 m-0" type="button" @click="addItem()">
+          <button aria-label="Add Item" class="btn p-0 m-0" type="button" @click="addItem()">
             <svg
-              version="1.2"
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 18 18"
               width="18"
@@ -180,7 +180,7 @@
           Drag and drop to reorder list
         </p>
     </div>
-  </div>
+  </main>
 </template>
 
 <script>
